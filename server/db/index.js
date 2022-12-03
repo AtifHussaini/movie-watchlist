@@ -35,9 +35,9 @@ Movie.belongsToMany(Genre, { through: "movies_genres"})
 Genre.belongsToMany(Movie, { through: "movies_genres"})
 
 module.exports = {
-    db,
-    Movie,
-    Genre
+    db: db,
+    Movie: Movie,
+    Genre: Genre
 }
 
 // const test = async () => {
