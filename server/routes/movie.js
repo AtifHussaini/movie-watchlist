@@ -4,13 +4,48 @@ const { Genre, Movie } = require('../db')
 
 // GET /movies
 router.get('/', async (req, res, next) => {
+    const onlyUnwatched = req.query.unwatched === "1";
+    const genreName = req.query.genre;
+    const whereClause = {}
+
+    if (onlyUnwatched === true) {
+        whereClause.watched = false;
+    }
+
     try {
-        const allMovies = await Movie.findAll( {
-            include: [Genre],
-            order: [
-                ["title", "ASC"]
-            ]
-        });
+
+        let movies;
+        if (genreName) {
+
+            const specificGenre = await Genre.findOne({
+                where: {
+                    name: genreName
+                }
+            });
+
+            if (!specificGenre) {
+                res.status(404).send("Unknown genre");
+                return;
+            }
+
+            movies = await specificGenre.getMovies({
+                include: [Genre],
+                order: [
+                    ["title", "ASC"]
+                ],
+                where: whereClause
+            });
+
+        } else {
+            movies = await Movie.findAll( {
+                include: [Genre],
+                order: [
+                    ["title", "ASC"]
+                ],
+                where: whereClause
+            });
+        }
+        
         res.send(`
             <!DOCTYPE html>
             <html>
@@ -18,15 +53,18 @@ router.get('/', async (req, res, next) => {
                 <link rel="stylesheet" type="text/css" href="/movie-list-style.css">
                 <body>
                     <h1>Movie List</h1>
+                    <nav>
+                        <a href="/movies/?unwatched=1">Only Unwatched Movies</a>
+                    </nav>
                     <ul>
-                        ${allMovies.map(movie => {
+                        ${movies.map(movie => {
                             return `
                             <li class="${movie.watched === true ? "watched" : ""}">
                             <h2>${movie.title}</h2>
                             ${movie.imdbLink ? `<a target="_blank"href="${movie.imdbLink}">IMDB</a>` : ""}
                             <ul>
                                 ${movie.genres.map(genre => {
-                                    return `<li>${genre.name}</li>`
+                                    return `<li><a href="/movies?genre=${genre.name}">${genre.name}</a></li>`
                                 }).join("")}
                             </ul>
                             ${movie.watched === false ? `<a href="/movies/${movie.id}/mark-watched">I watched this</a>` : ""}
@@ -92,6 +130,7 @@ router.get('/:movieId/mark-watched', async (req, res, next) => {
 
         if(!theMovie) {
             res.status(404).send("No movie with that id");
+            return;
         }
 
         theMovie.watched = true;
