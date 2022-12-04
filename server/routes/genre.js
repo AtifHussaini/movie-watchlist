@@ -9,7 +9,10 @@ router.get('/', (req, res) => {
     res.send(`
         <!DOCTYPE html>
         <html>
-        <head><title>Add a New Genre</title><head>
+        <head>
+            <title>Add a New Genre</title>
+            <link rel="stylesheet" type="text/css" href="/base-styling.css">
+        <head>
         <body>
             <h1>Add new genre</h1>
             <form method="POST" action="/genre">
