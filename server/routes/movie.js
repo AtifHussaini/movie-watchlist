@@ -1,6 +1,7 @@
 const express = require('express')
 const router = express.Router()
-const { Genre, Movie } = require('../db')
+const { Genre, Movie } = require('../db');
+const { all } = require('./genre');
 
 // GET /movies
 router.get('/', async (req, res, next) => {
@@ -55,6 +56,8 @@ router.get('/', async (req, res, next) => {
                     <h1>Movie List</h1>
                     <nav>
                         <a href="/movies/?unwatched=1">Only Unwatched Movies</a>
+                        <a href="/movies/feeling-lucky">I'm Feeling Lucky</a>
+                        <a href="/movies/add-movie">Add to Watchlist</a>
                     </nav>
                     <ul>
                         ${movies.map(movie => {
@@ -79,6 +82,35 @@ router.get('/', async (req, res, next) => {
     }
 });
 
+// GET /movies/feeling-lucky
+router.get('/feeling-lucky', async (req, res, next) => {
+
+    try {
+        const allUnwatchedMovies = await Movie.findAll({
+            where: {
+                watched: false
+            }
+        });
+
+        const amountOfUnwatchedMovies = allUnwatchedMovies.length;
+        const randomNumber = Math.floor(Math.random() * amountOfUnwatchedMovies); 
+        const chosenMovie = allUnwatchedMovies[randomNumber]
+
+        res.send(`
+            <!DOCTYPE html>
+            <html>
+                <head><title>Your Chosen Movie</title></head>
+                <body>
+                   <h1>Yo should watch: ${chosenMovie.title}</h1>
+                   <a href="/movies">Back to list</a>
+                   <a href="/movies/feeling-lucky">Try again</a>
+                </body>
+            </html>
+        `)
+    } catch(err) {
+        next(err)
+    }
+});
 // GET /movies/add-movie
 // respond with HTML text to be rendered by the browser
 // show a form
@@ -141,7 +173,7 @@ router.get('/:movieId/mark-watched', async (req, res, next) => {
     } catch(err) {
         next(err)
     }
-})
+});
 
 // POST /movies
 router.post('/', async (req, res, next) => {
